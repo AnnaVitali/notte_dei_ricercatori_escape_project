@@ -34,6 +34,8 @@ def stackImages(scale,imgArray):
 
 def getContours(img, imgContour):
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    totalCorners = 0
+    
     for cnt in contours:
         area = cv2.contourArea(cnt)
         
@@ -42,6 +44,7 @@ def getContours(img, imgContour):
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
             objCor = len(approx)
+            totalCorners += objCor
             x, y, w, h = cv2.boundingRect(approx)
 
             if objCor == 3:
@@ -90,9 +93,17 @@ def getContours(img, imgContour):
             # cv2.putText(imgContour, f"Perimeter: {int(peri)}",
             #             (x + 5, y + 65), 
             #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+    
+    return totalCorners
 
 
 
+
+# ============== DEBUG FLAG ==============
+# Set to True to see the 6-view interface (original, gray, blur, canny, contour, blank)
+# Set to False to see only the shape identification view
+debug = False
+# ==========================================
 
 path = 'Resources/shapes.png'
 # img = cv2.imread(path)  # Commented out: use video capture instead
@@ -115,20 +126,30 @@ while True:
     imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     imgBlur = cv2.GaussianBlur(imgGray, (7, 7), 1)
     imgCanny = cv2.Canny(imgBlur, 50, 50)
-    getContours(imgCanny, imgContour)
+    totalCorners = getContours(imgCanny, imgContour)
+    
+    # Display total corners count in the top-left corner
+    cv2.putText(imgContour, f"Total Corners: {totalCorners}",
+                (10, 30), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
-    imgBlank = np.zeros_like(img)
-    imgStack = stackImages(0.8, ([img, imgGray, imgBlur],
-                                [imgCanny, imgContour, imgBlank]))
-
-    cv2.imshow("Stack", imgStack)
+    if debug:
+        # Show 6-view interface with all processing stages
+        imgBlank = np.zeros_like(img)
+        imgStack = stackImages(0.8, ([img, imgGray, imgBlur],
+                                    [imgCanny, imgContour, imgBlank]))
+        cv2.imshow("Debug - Stack View", imgStack)
+    else:
+        # Show only the shape identification view
+        cv2.imshow("Shapes", imgContour)
 
     key = cv2.waitKey(1) & 0xFF
     if key == 27:  # ESC key
         break
     
-    # Also check if window was closed
-    if cv2.getWindowProperty("Stack", cv2.WND_PROP_VISIBLE) < 1:
+    # Check if window was closed
+    window_name = "Debug - Stack View" if debug else "Shapes"
+    if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
         break
 
 cap.release()
