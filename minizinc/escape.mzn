@@ -27,7 +27,7 @@ constraint forall(i in 1..maxstep-1)
 constraint sliding_sum(1,rest,rest,
             [guard[path[i]] = 0| i in STEP]); 
 
-%constraint sum(i in STEP)(guard[path[i]]) = 23;
+constraint sum(i in STEP)(guard[path[i]]) = 23;
 solve minimize sum(i in STEP)(guard[path[i]]);
 
 output [
