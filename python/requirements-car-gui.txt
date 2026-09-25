@@ -1,0 +1,4 @@
+-r requirements-joystick.txt
+opencv-contrib-python
+numpy
+Pillow
